@@ -51,21 +51,25 @@ if __name__ == "__main__":
         all_Pk.append(Pk_log_lst)
 
     # Plot the results
+    # use LaTeX fonts in the plot
+    plt.rc("text", usetex=False)
+    plt.rc("font", family='serif')
+
     for pi in range(NUM_ACROSS):
         for pj in range(NUM_DOWN):
             idx = pi * NUM_ACROSS + pj
             axs[pi % NUM_ACROSS, pj % NUM_DOWN].plot(all_k[idx], all_Pk[idx])
             axs[pi % NUM_ACROSS, pj % NUM_DOWN].set_title(str(ITER_NODES[idx]) + ' Nodes')
-
-        # axs[0, 0].plot(k_lst, Pk_log_lst)
-        # axs[0, 0].set_title('10 Nodes')
-        # axs[0, 1].plot(k_lst, Pk_log_lst, 'tab:orange')
-        # axs[0, 1].set_title('100 Nodes')
-        # axs[1, 0].plot(k_lst, Pk_log_lst, 'tab:green')
-        # axs[1, 0].set_title('1000 Nodes')
-        # axs[1, 1].plot(k_lst, Pk_log_lst, 'tab:red')
-        # axs[1, 1].set_title('10000 Nodes')
     
+    # axs[0, 0].plot(k_lst, Pk_log_lst)
+    # axs[0, 0].set_title('10 Nodes')
+    # axs[0, 1].plot(k_lst, Pk_log_lst, 'tab:orange')
+    # axs[0, 1].set_title('100 Nodes')
+    # axs[1, 0].plot(k_lst, Pk_log_lst, 'tab:green')
+    # axs[1, 0].set_title('1000 Nodes')
+    # axs[1, 1].plot(k_lst, Pk_log_lst, 'tab:red')
+    # axs[1, 1].set_title('10000 Nodes')
+
     # After all subplot iterations, label the plot
     for ax in axs.flat:
         ax.set(xlabel='k', ylabel='ln(P(k))')
@@ -74,6 +78,7 @@ if __name__ == "__main__":
     # for ax in axs.flat:
     #     ax.label_outer()
 
+    plt.savefig("../output/images/random-network_node_degree_analysis.png")
     plt.show()
 
     # plt.plot(k_lst, Pk_log_lst)
