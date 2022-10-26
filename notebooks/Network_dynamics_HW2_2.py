@@ -51,6 +51,12 @@ if __name__ == "__main__":
     M = nx.quotient_graph(G_lcc, G_louvain)
     print("Degree of each node in the quotient graph: \t", [n[1] for n in M.degree])
     
+    # Store data for plot details
+    node_sizes = []
+
+    for n in list(M.nodes()):
+        node_sizes.append(len(n))
+
     # Plot the results
     # use LaTeX fonts in the plot
     plt.rc("text", usetex=False)
@@ -62,7 +68,7 @@ if __name__ == "__main__":
     # plt.xlabel("Clustering coefficient")
     # plt.ylabel("Number of nodes")
     # Visualize the network
-    nx.draw_networkx_nodes(M, pos=nx.circular_layout(M), node_size=8)
+    nx.draw_networkx_nodes(M, pos=nx.circular_layout(M), node_size=node_sizes)
     nx.draw_networkx_edges(M, pos=nx.circular_layout(M), alpha=0.5)
     plt.savefig("../output/images/network_louvain_community_quotients.png")
     plt.show()
