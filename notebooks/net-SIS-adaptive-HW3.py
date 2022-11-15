@@ -54,7 +54,15 @@ def update():
                 else:
                     G.nodes[a]['state'] = 1 if random() < p_i else 0
     else: # if infected
-        G.nodes[a]['state'] = 0 if random() < p_r else 1
+        # potentially die
+        if random() < 0.05: # death rate of the infected
+            G.remove_node(a)
+        # else potentially recover
+        else:
+            if random() < p_r:
+                G.nodes[a]['state'] = 0
+            else:
+                G.nodes(a)['state'] = 1
 
 if __name__ == "__main__":
     initialize()
