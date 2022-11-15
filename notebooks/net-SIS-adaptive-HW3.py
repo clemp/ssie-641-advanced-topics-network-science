@@ -6,6 +6,7 @@ class State(Enum):
     SUSCEPTIBLE = 0
     INFECTED = 1
     RECOVERED = 2
+    DEAD = 3
 
 import networkx as nx
 # papers to cite
@@ -28,7 +29,11 @@ def initialize():
     # g = nx.karate_club_graph() # todo: update this for a small-world network
     G.pos = nx.spring_layout(G)
     for i in G.nodes:
-        G.nodes[i]['state'] = 1 if random() < .5 else 0 # todo: decide how to initially infect the population
+        # randomly infect nodes
+        if random() < 0.5:
+            G.nodes[i]['state'] = State.INFECTED
+        else:
+            G.nodes[i]['state'] = State.SUSCEPTIBLE # todo: decide how to initially infect the population
     
 def observe():
     global G
@@ -43,16 +48,24 @@ p_s = 0.5 # severance probability
 
 def update():
     global G
+    # randomly select a node to be updated
     a = choice(list(G.nodes))
-    if G.nodes[a]['state'] == 0: # if susceptible
+    if G.nodes[a]['state'] == State.SUSCEPTIBLE: # if susceptible
+        # if the node is connected to neighbors
         if G.degree(a) > 0:
+            # randomly select a neighbor of the selected node
             b = choice(list(G.neighbors(a)))
-            if G.nodes[b]['state'] == 1: # if neighbor b is infected
+            # if neighbor b is infected
+            if G.nodes[b]['state'] == State.INFECTED: 
                 if random() < p_s: # todo: decide how to implement "severance" (social distancing).
                     # todo: if the node has been infected multiple times the probability of severance will decrease
                     G.remove_edge(a, b)
                 else:
-                    G.nodes[a]['state'] = 1 if random() < p_i else 0
+                    # infect the selected node with some probability
+                    if random() < p_i:
+                        G.nodes[a]['state'] = State.INFECTED
+                    else:
+                        G.nodes[a]['state'] = State.SUSCEPTIBLE
     else: # if infected
         # potentially die
         if random() < 0.05: # death rate of the infected
