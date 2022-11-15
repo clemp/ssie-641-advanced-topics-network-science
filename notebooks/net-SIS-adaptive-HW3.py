@@ -1,9 +1,16 @@
-import pycxsimulator
+# import pycxsimulator
 from pylab import *
+from enum import Enum
+
+class State(Enum):
+    SUSCEPTIBLE = 0
+    INFECTED = 1
+    RECOVERED = 2
 
 import networkx as nx
 # papers to cite
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7321055/
+# NMDOH https://cvmodeling.nmhealth.org
 
 # Changes to standard SIR
 # Infected nodes
@@ -13,36 +20,44 @@ import networkx as nx
 # Susceptible nodes
 ## - some Susceptible nodes that were previously Infected have higher probability to become Infected again
 ##      this simulates them becoming less careful about social distancing
+
+G = nx.watts_strogatz_graph(n=10, k=5, p=0.08, seed=315)
+
 def initialize():
-    global g
-    g = nx.karate_club_graph() # need to update this for a small-world network
-    g.pos = nx.spring_layout(g)
-    for i in g.nodes:
-        g.nodes[i]['state'] = 1 if random() < .5 else 0
+    global G
+    # g = nx.karate_club_graph() # todo: update this for a small-world network
+    G.pos = nx.spring_layout(G)
+    for i in G.nodes:
+        G.nodes[i]['state'] = 1 if random() < .5 else 0 # todo: decide how to initially infect the population
     
 def observe():
-    global g
+    global G
     cla()
     nx.draw(g, cmap = cm.Wistia, vmin = 0, vmax = 1,
-            node_color = [g.nodes[i]['state'] for i in g.nodes],
-            pos = g.pos)
+            node_color = [G.nodes[i]['state'] for i in G.nodes],
+            pos = G.pos)
 
 p_i = 0.5 # infection probability
 p_r = 0.1 # recovery probability
 p_s = 0.5 # severance probability
 
 def update():
-    global g
-    a = choice(list(g.nodes))
-    if g.nodes[a]['state'] == 0: # if susceptible
-        if g.degree(a) > 0:
-            b = choice(list(g.neighbors(a)))
-            if g.nodes[b]['state'] == 1: # if neighbor b is infected
-                if random() < p_s:
-                    g.remove_edge(a, b)
+    global G
+    a = choice(list(G.nodes))
+    if G.nodes[a]['state'] == 0: # if susceptible
+        if G.degree(a) > 0:
+            b = choice(list(G.neighbors(a)))
+            if G.nodes[b]['state'] == 1: # if neighbor b is infected
+                if random() < p_s: # todo: decide how to implement "severance" (social distancing).
+                    # todo: if the node has been infected multiple times the probability of severance will decrease
+                    G.remove_edge(a, b)
                 else:
-                    g.nodes[a]['state'] = 1 if random() < p_i else 0
+                    G.nodes[a]['state'] = 1 if random() < p_i else 0
     else: # if infected
-        g.nodes[a]['state'] = 0 if random() < p_r else 1
+        G.nodes[a]['state'] = 0 if random() < p_r else 1
 
+if __name__ == "__main__":
+    initialize()
+    for i in range(3):
+        update()
 # pycxsimulator.GUI().start(func=[initialize, observe, update])
