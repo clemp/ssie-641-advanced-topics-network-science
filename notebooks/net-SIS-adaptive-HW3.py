@@ -5,8 +5,9 @@ from enum import Enum
 class State(Enum):
     SUSCEPTIBLE = 0
     INFECTED = 1
-    RECOVERED = 2
-    DEAD = 3
+    ISOLATED = 2
+    RECOVERED = 3
+    DEAD = 4
 
 import networkx as nx
 # papers to cite
@@ -45,9 +46,27 @@ def observe():
 p_i = 0.5 # infection probability
 p_r = 0.1 # recovery probability
 p_s = 0.5 # severance probability
+i_t = 14  # isolation period for self-isolators
 
 def update():
     global G
+    # isolated nodes return from isolation if their period is up
+    isolated_nodes = [n for n in list(G.nodes) if G.nodes[n]['state'] == State.ISOLATED]
+    for n in isolated_nodes:
+        if G.nodes[n]['isolation_counter'] == i_t:
+            G.nodes[n]['state'] == State.SUSCEPTIBLE
+            G.nodes[n]['isolation_counter'] = 0
+
+    # infected nodes choose to self isolate with some probability
+    infected = [n for n in list(G.nodes) if G.nodes[n]['state'] == State.INFECTED]
+    for n in infected:
+        if random() < 0.3: # prob of an infected node choosing to self-isolate
+            # starts at one because this node will be isolated for the rest of this update step
+            G.nodes[n]['isolation_counter'] = 1
+            G.nodes[n]['state'] == State.ISOLATED
+            isolated_nodes.append(n)
+
+
     # randomly select a node to be updated
     a = choice(list(G.nodes))
     if G.nodes[a]['state'] == State.SUSCEPTIBLE: # if susceptible
@@ -64,9 +83,12 @@ def update():
                     # infect the selected node with some probability
                     if random() < p_i:
                         G.nodes[a]['state'] = State.INFECTED
+                    # else stay susceptible
                     else:
                         G.nodes[a]['state'] = State.SUSCEPTIBLE
     else: # if infected
+        # potentially social distance
+        # - todo: node will remove all of its edges for some amount of time then reconnect with them
         # potentially die
         if random() < 0.05: # death rate of the infected
             G.remove_node(a)
