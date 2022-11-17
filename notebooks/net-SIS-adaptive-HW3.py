@@ -62,7 +62,7 @@ def update():
     for n in infected:
         if random() < 0.3: # prob of an infected node choosing to self-isolate
             # starts at one because this node will be isolated for the rest of this update step
-            G.nodes[n]['isolation_counter'] = 1
+            G.nodes[n]['isolation_counter'] = 0
             G.nodes[n]['state'] == State.ISOLATED
             isolated_nodes.append(n)
 
@@ -98,6 +98,10 @@ def update():
                 G.nodes[a]['state'] = 0
             else:
                 G.nodes(a)['state'] = 1
+
+    # increment the counter for all isolated nodes
+    for n in isolated_nodes:
+        G.nodes[n]['isolation_counter'] += 1
 
 if __name__ == "__main__":
     initialize()
