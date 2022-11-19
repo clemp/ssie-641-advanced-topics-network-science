@@ -35,6 +35,8 @@ def initialize():
             G.nodes[i]['state'] = State.INFECTED
         else:
             G.nodes[i]['state'] = State.SUSCEPTIBLE # todo: decide how to initially infect the population
+        # initialize all nodes isolation as not isolated
+        G.nodes[i]['isolation_counter'] = 0
     
 def observe():
     global G
@@ -61,14 +63,24 @@ def update():
     infected = [n for n in list(G.nodes) if G.nodes[n]['state'] == State.INFECTED]
     for n in infected:
         if random() < 0.3: # prob of an infected node choosing to self-isolate
-            # starts at one because this node will be isolated for the rest of this update step
-            G.nodes[n]['isolation_counter'] = 0
+            # begin isolation and temporarily disconnect from neighbors
             G.nodes[n]['state'] == State.ISOLATED
+            G.nodes[n]['isolation_counter'] = 0
+
+            # remember neighbors to reconnect with later
+            print("node", n, " neighbors:",list(G.neighbors(n)))
+            isolated_neighbors = [(n, G.neighbors(n)) for n in ]
+
+            # remove connections
+            for neighbor in G.neighbors(n):
+                G.remove_edge(n, neighbor)
+
+            # update the list of isolated nodes
             isolated_nodes.append(n)
 
+    # randomly select a non-isolated node to be updated
+    a = choice([n for n in G.nodes() if G.nodes[n]['state'] != State.ISOLATED])
 
-    # randomly select a node to be updated
-    a = choice(list(G.nodes))
     if G.nodes[a]['state'] == State.SUSCEPTIBLE: # if susceptible
         # if the node is connected to neighbors
         if G.degree(a) > 0:
@@ -95,9 +107,9 @@ def update():
         # else potentially recover
         else:
             if random() < p_r:
-                G.nodes[a]['state'] = 0
+                G.nodes[a]['state'] = State.SUSCEPTIBLE
             else:
-                G.nodes(a)['state'] = 1
+                G.nodes[a]['state'] = State.ISOLATED
 
     # increment the counter for all isolated nodes
     for n in isolated_nodes:
