@@ -46,7 +46,9 @@ def observe():
             pos = G.pos)
 
 p_i = 0.5 # infection probability
+p_i_d = 0.05 # probability of dying when infected
 p_r = 0.1 # recovery probability
+p_r_s = 0.1 # probability to become susceptible again after recovery
 p_s = 0.5 # severance probability
 i_t = 14  # isolation period for self-isolators
 
@@ -68,52 +70,94 @@ def update():
             G.nodes[n]['isolation_counter'] = 0
 
             # remember neighbors to reconnect with later
-            print("node", n, " neighbors:",list(G.neighbors(n)))
-            isolated_neighbors = [(n, G.neighbors(n)) for n in ]
+            # print("node", n, " neighbors:",list(G.neighbors(n)))
+            # isolated_neighbors = [(n, G.neighbors(n)) for n in G.nodes]
 
             # remove connections
-            for neighbor in G.neighbors(n):
-                G.remove_edge(n, neighbor)
+            # for neighbor in list(G.neighbors(n)):
+                # G.remove_edge(n, neighbor)
 
             # update the list of isolated nodes
-            isolated_nodes.append(n)
+            # isolated_nodes.append(n)
 
     # randomly select a non-isolated node to be updated
-    a = choice([n for n in G.nodes() if G.nodes[n]['state'] != State.ISOLATED])
+    # a = choice([n for n in G.nodes() if G.nodes[n]['state'] != State.ISOLATED])
 
-    if G.nodes[a]['state'] == State.SUSCEPTIBLE: # if susceptible
-        # if the node is connected to neighbors
-        if G.degree(a) > 0:
-            # randomly select a neighbor of the selected node
-            b = choice(list(G.neighbors(a)))
-            # if neighbor b is infected
-            if G.nodes[b]['state'] == State.INFECTED: 
-                if random() < p_s: # todo: decide how to implement "severance" (social distancing).
-                    # todo: if the node has been infected multiple times the probability of severance will decrease
-                    G.remove_edge(a, b)
-                else:
-                    # infect the selected node with some probability
-                    if random() < p_i:
-                        G.nodes[a]['state'] = State.INFECTED
-                    # else stay susceptible
-                    else:
-                        G.nodes[a]['state'] = State.SUSCEPTIBLE
-    else: # if infected
-        # potentially social distance
-        # - todo: node will remove all of its edges for some amount of time then reconnect with them
-        # potentially die
-        if random() < 0.05: # death rate of the infected
-            G.remove_node(a)
-        # else potentially recover
-        else:
-            if random() < p_r:
-                G.nodes[a]['state'] = State.SUSCEPTIBLE
+    # update all nodes
+    for node in list(G.nodes()):
+        # if isolated increase the isolation counter
+        if G.nodes[node]['state'] == State.ISOLATED:
+            # potentially die while in isolation
+            if random() < p_i_d:
+                G.nodes[node]['state'] == State.DEAD
+                for neighbor in G.neighbors(node):
+                    G.remove_edge(node, neighbor)
+            # if not dead and isolation period over return to the population as recovered
+            elif G.nodes[node]['isolation_counter'] == i_t:
+                G.nodes[node]['state'] == State.RECOVERED
+                G.nodes[node]['isolation_counter'] = 0 # reset isoltion
+            # otherwise stay isolated for another step
             else:
-                G.nodes[a]['state'] = State.ISOLATED
+                G.nodes[node]['isolation_counter'] += 1
+        # if susceptible potentially get infected by an infected, non-isolated neighbor
+        elif G.nodes[node]['state'] == State.SUSCEPTIBLE:
+            # 1 - probability of not getting infected by any infected neighbor
+            # probability of not getting infected by a single neighbor 1-p_i
+            # probability of not getting infected by any neighbors (1-p_i)^(# infected neighbors)
+            # probability of getting infected by at least one neighbor (1-p_i)^(# infected neighbors)
+            num_infected_neighbors = sum([1 for neighbor in G.neighbors(node) if G.nodes[neighbor]['state'] == State.INFECTED])
+            if random() < (1 - pow(1-p_i,num_infected_neighbors)):
+                G.nodes[node]['state'] == State.INFECTED
+            else:
+                pass # stay susceptible
+        elif G.nodes[node]['state'] == State.RECOVERED:
+            # potentially become susceptible to infection again
+            if random() < p_r_s:
+                G.nodes[node]['state'] == State.SUSCEPTIBLE
+        # non-isolated infected nodes
+        elif G.nodes[node]['state'] == State.INFECTED:
+            # potentially die
+            if random() < p_i_d:
+                G.nodes[node]['state'] == State.DEAD
+                for neighbor in G.neighbors(node):
+                    G.remove_edge(node, neighbor)
+            elif random() < p_r: # or potentially recover
+                G.nodes[node]['state'] == State.RECOVERED
+            else: # or just state infected
+                pass
+    # if G.nodes[a]['state'] == State.SUSCEPTIBLE: # if susceptible
+    #     # if the node is connected to neighbors
+    #     if G.degree(a) > 0:
+    #         # randomly select a neighbor of the selected node
+    #         b = choice(list(G.neighbors(a)))
+    #         # if neighbor b is infected
+    #         if G.nodes[b]['state'] == State.INFECTED: 
+    #             if random() < p_s: # todo: decide how to implement "severance" (social distancing).
+    #                 # todo: if the node has been infected multiple times the probability of severance will decrease
+    #                 G.remove_edge(a, b)
+    #             else:
+    #                 # infect the selected node with some probability
+    #                 if random() < p_i:
+    #                     G.nodes[a]['state'] = State.INFECTED
+    #                 # else stay susceptible
+    #                 else:
+    #                     G.nodes[a]['state'] = State.SUSCEPTIBLE
+    # else: # if infected
+    #     # potentially social distance
+    #     # - todo: node will remove all of its edges for some amount of time then reconnect with them
+    #     # potentially die
+    #     if random() < 0.05: # death rate of the infected
+    #         G.remove_node(a)
+    #     # else potentially recover
+    #     else:
+    #         if random() < p_r:
+    #             G.nodes[a]['state'] = State.SUSCEPTIBLE
+    #         else:
+    #             G.nodes[a]['state'] = State.ISOLATED
 
     # increment the counter for all isolated nodes
-    for n in isolated_nodes:
-        G.nodes[n]['isolation_counter'] += 1
+    # for n in isolated_nodes:
+    #     G.nodes[n]['isolation_counter'] += 1
 
 if __name__ == "__main__":
     initialize()
