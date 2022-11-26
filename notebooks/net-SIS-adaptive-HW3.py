@@ -81,20 +81,6 @@ def update():
             G.nodes[n]['state'] = State.ISOLATED
             G.nodes[n]['isolation_counter'] = 0
 
-            # remember neighbors to reconnect with later
-            # print("node", n, " neighbors:",list(G.neighbors(n)))
-            # isolated_neighbors = [(n, G.neighbors(n)) for n in G.nodes]
-
-            # remove connections
-            # for neighbor in list(G.neighbors(n)):
-                # G.remove_edge(n, neighbor)
-
-            # update the list of isolated nodes
-            # isolated_nodes.append(n)
-
-    # randomly select a non-isolated node to be updated
-    # a = choice([n for n in G.nodes() if G.nodes[n]['state'] != State.ISOLATED])
-
     # update all nodes
     for node in list(G.nodes()):
         # print("node: \t", node)
@@ -141,47 +127,7 @@ def update():
                 G.nodes[node]['state'] = State.RECOVERED
             else: # or just state infected
                 pass
-    # print("# Susceptible: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.SUSCEPTIBLE])))
-    # print("# Infected: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.INFECTED])))
-    # print("# Recovered: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.RECOVERED])))
-    
-    # print("# dead: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.DEAD])))
-    # print("# isolated: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.ISOLATED])))
-    
-    
-    # if G.nodes[a]['state'] == State.SUSCEPTIBLE: # if susceptible
-    #     # if the node is connected to neighbors
-    #     if G.degree(a) > 0:
-    #         # randomly select a neighbor of the selected node
-    #         b = choice(list(G.neighbors(a)))
-    #         # if neighbor b is infected
-    #         if G.nodes[b]['state'] == State.INFECTED: 
-    #             if random() < p_s: # todo: decide how to implement "severance" (social distancing).
-    #                 # todo: if the node has been infected multiple times the probability of severance will decrease
-    #                 G.remove_edge(a, b)
-    #             else:
-    #                 # infect the selected node with some probability
-    #                 if random() < p_i:
-    #                     G.nodes[a]['state'] = State.INFECTED
-    #                 # else stay susceptible
-    #                 else:
-    #                     G.nodes[a]['state'] = State.SUSCEPTIBLE
-    # else: # if infected
-    #     # potentially social distance
-    #     # - todo: node will remove all of its edges for some amount of time then reconnect with them
-    #     # potentially die
-    #     if random() < 0.05: # death rate of the infected
-    #         G.remove_node(a)
-    #     # else potentially recover
-    #     else:
-    #         if random() < p_r:
-    #             G.nodes[a]['state'] = State.SUSCEPTIBLE
-    #         else:
-    #             G.nodes[a]['state'] = State.ISOLATED
 
-    # increment the counter for all isolated nodes
-    # for n in isolated_nodes:
-    #     G.nodes[n]['isolation_counter'] += 1
 
 if __name__ == "__main__":
     initialize()
