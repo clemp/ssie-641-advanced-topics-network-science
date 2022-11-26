@@ -119,7 +119,7 @@ def update():
             # potentially die
             if random() < p_i_d:
                 G.nodes[node]['state'] == State.DEAD
-                for neighbor in G.neighbors(node):
+                for neighbor in list(G.neighbors(node)):
                     G.remove_edge(node, neighbor)
             elif random() < p_r: # or potentially recover
                 G.nodes[node]['state'] == State.RECOVERED
