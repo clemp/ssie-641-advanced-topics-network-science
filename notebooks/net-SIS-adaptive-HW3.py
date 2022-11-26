@@ -23,7 +23,23 @@ import networkx as nx
 ## - some Susceptible nodes that were previously Infected have higher probability to become Infected again
 ##      this simulates them becoming less careful about social distancing
 
-G = nx.watts_strogatz_graph(n=10, k=5, p=0.08, seed=315)
+p_i = 0.35 # infection probability
+p_i_d = 0.02 # probability of dying when infected
+p_r = 0.3 # recovery probability
+p_r_s = 0.1 # probability to become susceptible again after recovery
+p_s = 0.03 # self isolation probability
+i_t = 14  # isolation period for self-isolators
+
+# Set Watts-Strogatz network parameters
+NUM_NODES = 1000
+NUM_NEIGHBORS = 6
+PROB_REWIRE = 0.08
+
+G = nx.watts_strogatz_graph(
+        n=NUM_NODES,
+        k=NUM_NEIGHBORS,
+        p=PROB_REWIRE
+    )
 
 def initialize():
     global G
@@ -45,28 +61,21 @@ def observe():
             node_color = [G.nodes[i]['state'] for i in G.nodes],
             pos = G.pos)
 
-p_i = 0.99 # infection probability
-p_i_d = 0.02 # probability of dying when infected
-p_r = 0.1 # recovery probability
-p_r_s = 0.1 # probability to become susceptible again after recovery
-p_s = 0.5 # severance probability
-i_t = 14  # isolation period for self-isolators
-
 def update():
     global G
-    # isolated nodes return from isolation if their period is up
+    # isolated nodes return from isolation as recovered if their period is up
     isolated_nodes = [n for n in list(G.nodes) if G.nodes[n]['state'] == State.ISOLATED]
     for n in isolated_nodes:
         if G.nodes[n]['isolation_counter'] == i_t:
-            G.nodes[n]['state'] == State.SUSCEPTIBLE
+            G.nodes[n]['state'] = State.RECOVERED
             G.nodes[n]['isolation_counter'] = 0
 
     # infected nodes choose to self isolate with some probability
-    infected = [n for n in list(G.nodes) if G.nodes[n]['state'] == State.INFECTED]
+    infected = [n for n in G.nodes if G.nodes[n]['state'] == State.INFECTED]
     for n in infected:
-        if random() < 0.3: # prob of an infected node choosing to self-isolate
+        if random() < p_s: # prob of an infected node choosing to self-isolate
             # begin isolation and temporarily disconnect from neighbors
-            G.nodes[n]['state'] == State.ISOLATED
+            G.nodes[n]['state'] = State.ISOLATED
             G.nodes[n]['isolation_counter'] = 0
 
             # remember neighbors to reconnect with later
@@ -91,7 +100,7 @@ def update():
             # potentially die while in isolation
             if random() < p_i_d:
                 G.nodes[node]['state'] == State.DEAD
-                for neighbor in G.neighbors(node):
+                for neighbor in list(G.neighbors(node)):
                     G.remove_edge(node, neighbor)
             # if not dead and isolation period over return to the population as recovered
             elif G.nodes[node]['isolation_counter'] == i_t:
@@ -109,9 +118,9 @@ def update():
             num_infected_neighbors = sum([1 for neighbor in G.neighbors(node) if G.nodes[neighbor]['state'] == State.INFECTED])
             if random() < (1 - pow(1-p_i,num_infected_neighbors)):
                 
-                print("Node state: \t", G.nodes[node]['state'])
+                # print("Node state: \t", G.nodes[node]['state'])
                 G.nodes[node]['state'] = State.INFECTED
-                print("Node state after infection: \t", G.nodes[node]['state'])
+                # print("Node state after infection: \t", G.nodes[node]['state'])
             else:
                 pass # stay susceptible
         elif G.nodes[node]['state'] == State.RECOVERED:
@@ -129,8 +138,13 @@ def update():
                 G.nodes[node]['state'] = State.RECOVERED
             else: # or just state infected
                 pass
-    print("# infected: \t", sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.INFECTED]))
-    print("# dead: \t", sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.DEAD]))
+    # print("# Susceptible: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.SUSCEPTIBLE])))
+    # print("# Infected: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.INFECTED])))
+    # print("# Recovered: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.RECOVERED])))
+    
+    # print("# dead: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.DEAD])))
+    # print("# isolated: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.ISOLATED])))
+    
     
     # if G.nodes[a]['state'] == State.SUSCEPTIBLE: # if susceptible
     #     # if the node is connected to neighbors
@@ -168,6 +182,18 @@ def update():
 
 if __name__ == "__main__":
     initialize()
-    for i in range(30):
+    for i in range(100):
+        if i % 10 == 0:
+            print("-- iteration: \t", i, "| Number of nodes: \t", sum([1 for n in G.nodes if G.nodes[n]['state'] != State.DEAD]))
+            print("# Susceptible: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.SUSCEPTIBLE])))
+            print("# Infected: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.INFECTED])))
+            print("# Recovered: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.RECOVERED])))
+    
+            print("# dead: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.DEAD])))
+            print("# isolated: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.ISOLATED])))
         update()
+    print("Recovery rate: \t", sum([1 for n in G.nodes if G.nodes[n]['state'] == State.RECOVERED]) / NUM_NODES)    
+    print("Death rate: \t", sum([1 for n in G.nodes if G.nodes[n]['state'] == State.DEAD]) / NUM_NODES)
+
+    
 # pycxsimulator.GUI().start(func=[initialize, observe, update])
