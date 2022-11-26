@@ -45,8 +45,8 @@ def observe():
             node_color = [G.nodes[i]['state'] for i in G.nodes],
             pos = G.pos)
 
-p_i = 0.5 # infection probability
-p_i_d = 0.05 # probability of dying when infected
+p_i = 0.99 # infection probability
+p_i_d = 0.02 # probability of dying when infected
 p_r = 0.1 # recovery probability
 p_r_s = 0.1 # probability to become susceptible again after recovery
 p_s = 0.5 # severance probability
@@ -85,6 +85,7 @@ def update():
 
     # update all nodes
     for node in list(G.nodes()):
+        # print("node: \t", node)
         # if isolated increase the isolation counter
         if G.nodes[node]['state'] == State.ISOLATED:
             # potentially die while in isolation
@@ -107,24 +108,30 @@ def update():
             # probability of getting infected by at least one neighbor (1-p_i)^(# infected neighbors)
             num_infected_neighbors = sum([1 for neighbor in G.neighbors(node) if G.nodes[neighbor]['state'] == State.INFECTED])
             if random() < (1 - pow(1-p_i,num_infected_neighbors)):
-                G.nodes[node]['state'] == State.INFECTED
+                
+                print("Node state: \t", G.nodes[node]['state'])
+                G.nodes[node]['state'] = State.INFECTED
+                print("Node state after infection: \t", G.nodes[node]['state'])
             else:
                 pass # stay susceptible
         elif G.nodes[node]['state'] == State.RECOVERED:
             # potentially become susceptible to infection again
             if random() < p_r_s:
-                G.nodes[node]['state'] == State.SUSCEPTIBLE
+                G.nodes[node]['state'] = State.SUSCEPTIBLE
         # non-isolated infected nodes
         elif G.nodes[node]['state'] == State.INFECTED:
             # potentially die
             if random() < p_i_d:
-                G.nodes[node]['state'] == State.DEAD
+                G.nodes[node]['state'] = State.DEAD
                 for neighbor in list(G.neighbors(node)):
                     G.remove_edge(node, neighbor)
             elif random() < p_r: # or potentially recover
-                G.nodes[node]['state'] == State.RECOVERED
+                G.nodes[node]['state'] = State.RECOVERED
             else: # or just state infected
                 pass
+    print("# infected: \t", sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.INFECTED]))
+    print("# dead: \t", sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.DEAD]))
+    
     # if G.nodes[a]['state'] == State.SUSCEPTIBLE: # if susceptible
     #     # if the node is connected to neighbors
     #     if G.degree(a) > 0:
@@ -161,6 +168,6 @@ def update():
 
 if __name__ == "__main__":
     initialize()
-    for i in range(3):
+    for i in range(30):
         update()
 # pycxsimulator.GUI().start(func=[initialize, observe, update])
