@@ -1,4 +1,7 @@
-# import pycxsimulator
+import sys
+sys.path.append('../packages/')
+import pycxsimulator as pycx
+
 from pylab import *
 from enum import Enum
 
@@ -24,10 +27,10 @@ import networkx as nx
 ##      this simulates them becoming less careful about social distancing
 
 p_i = 0.35 # infection probability
-p_i_d = 0.02 # probability of dying when infected
+p_i_d = 0.1 # probability of dying when infected
 p_r = 0.3 # recovery probability
-p_r_s = 0.1 # probability to become susceptible again after recovery
-p_s = 0.03 # self isolation probability
+p_r_s = 0.05 # probability to become susceptible again after recovery
+p_s = 0.4 # self isolation probability
 i_t = 14  # isolation period for self-isolators
 
 # Set Watts-Strogatz network parameters
@@ -196,4 +199,4 @@ if __name__ == "__main__":
     print("Death rate: \t", sum([1 for n in G.nodes if G.nodes[n]['state'] == State.DEAD]) / NUM_NODES)
 
     
-# pycxsimulator.GUI().start(func=[initialize, observe, update])
+    # pycx.GUI().start(func=[initialize, observe, update])
