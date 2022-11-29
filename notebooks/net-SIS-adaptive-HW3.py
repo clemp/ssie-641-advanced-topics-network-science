@@ -1,9 +1,12 @@
 import sys
-sys.path.append('../packages/')
-import pycxsimulator as pycx
+# sys.path.append('../packages/')
+# import pycxsimulator as pycx
+import pandas as pd
 
 from pylab import *
 from enum import Enum
+
+import matplotlib.pyplot as plt
 
 class State(Enum):
     SUSCEPTIBLE = 0
@@ -30,13 +33,16 @@ p_i = 0.35 # infection probability
 p_i_d = 0.1 # probability of dying when infected
 p_r = 0.3 # recovery probability
 p_r_s = 0.05 # probability to become susceptible again after recovery
-p_s = 0.4 # self isolation probability
+p_s = 0.35 # self-isolation probability
 i_t = 14  # isolation period for self-isolators
 
 # Set Watts-Strogatz network parameters
 NUM_NODES = 1000
 NUM_NEIGHBORS = 6
 PROB_REWIRE = 0.08
+
+# initialize a dataframe to collect results
+results_df = pd.DataFrame()
 
 G = nx.watts_strogatz_graph(
         n=NUM_NODES,
@@ -59,13 +65,31 @@ def initialize():
     
 def observe():
     global G
-    cla()
-    nx.draw(g, cmap = cm.Wistia, vmin = 0, vmax = 1,
-            node_color = [G.nodes[i]['state'] for i in G.nodes],
-            pos = G.pos)
+    global results_df
+    # cla()
+    # nx.draw(g, cmap = cm.Wistia, vmin = 0, vmax = 1,
+    #         node_color = [G.nodes[i]['state'] for i in G.nodes],
+    #         pos = G.pos)
+    # collect data to visualize
+    data = dict()
+    data["num_susceptible"] = sum([1 for n in G.nodes() if G.nodes[n]["state"] == State.SUSCEPTIBLE])
+    data["num_infected"] = sum([1 for n in G.nodes() if G.nodes[n]["state"] == State.INFECTED])
+    data["num_recovered"] = sum([1 for n in G.nodes() if G.nodes[n]["state"] == State.RECOVERED])
+    data["num_isolated"] = sum([1 for n in G.nodes() if G.nodes[n]["state"] == State.ISOLATED])
+    data["num_dead"] = sum([1 for n in G.nodes() if G.nodes[n]["state"] == State.DEAD])
 
+    data = pd.DataFrame([data])
+
+    # add data from this step as a row to the dataframe
+    results_df = pd.concat([
+            results_df, 
+            data
+        ], ignore_index=True)
+
+    
 def update():
     global G
+    global results_df
     # isolated nodes return from isolation as recovered if their period is up
     isolated_nodes = [n for n in list(G.nodes) if G.nodes[n]['state'] == State.ISOLATED]
     for n in isolated_nodes:
@@ -131,18 +155,55 @@ def update():
 
 if __name__ == "__main__":
     initialize()
-    for i in range(100):
-        if i % 10 == 0:
-            print("-- iteration: \t", i, "| Number of nodes: \t", sum([1 for n in G.nodes if G.nodes[n]['state'] != State.DEAD]))
-            print("# Susceptible: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.SUSCEPTIBLE])))
-            print("# Infected: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.INFECTED])))
-            print("# Recovered: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.RECOVERED])))
+    for i in range(365):
+        # if i % 10 == 0:
+        #     print("-- iteration: \t", i, "| Number of nodes: \t", sum([1 for n in G.nodes if G.nodes[n]['state'] != State.DEAD]))
+        #     print("# Susceptible: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.SUSCEPTIBLE])))
+        #     print("# Infected: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.INFECTED])))
+        #     print("# Recovered: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.RECOVERED])))
     
-            print("# dead: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.DEAD])))
-            print("# isolated: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.ISOLATED])))
+        #     print("# dead: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.DEAD])))
+        #     print("# isolated: \t", int(sum([1 for n in G.nodes() if G.nodes[n]['state'] == State.ISOLATED])))
+        observe()
         update()
+    print("--- results ---")
+    print(results_df)
     print("Recovery rate: \t", sum([1 for n in G.nodes if G.nodes[n]['state'] == State.RECOVERED]) / NUM_NODES)    
     print("Death rate: \t", sum([1 for n in G.nodes if G.nodes[n]['state'] == State.DEAD]) / NUM_NODES)
+    
+    # plot susceptible
+    results_df["num_susceptible"].plot(
+        figsize = (5,3),
+        marker='v'
+    )
+    
+    # plot infected
+    results_df["num_infected"].plot(
+        figsize = (5,3),
+        marker='o'
+    )
+
+    # plot recovered
+    results_df["num_recovered"].plot(
+        figsize = (5,3),
+        marker='o'
+    )
+
+    # plot isolated
+    results_df["num_isolated"].plot(
+        figsize = (5,3),
+        marker='o'
+    )
+
+    # plot dead
+    results_df["num_dead"].plot(
+        figsize = (5,3),
+        marker='o'
+    )
 
     
+
+    
+
+    plt.show()
     # pycx.GUI().start(func=[initialize, observe, update])
