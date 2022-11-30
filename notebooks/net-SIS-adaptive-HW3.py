@@ -7,6 +7,13 @@ from pylab import *
 from enum import Enum
 
 import matplotlib.pyplot as plt
+matplotlib.use("pgf")
+matplotlib.rcParams.update({
+    "pgf.texsystem": "pdflatex",
+    'font.family': 'serif',
+    'text.usetex': True,
+    'pgf.rcfonts': False,
+})
 
 class State(Enum):
     SUSCEPTIBLE = 0
@@ -33,7 +40,7 @@ p_i = 0.35 # infection probability
 p_i_d = 0.1 # probability of dying when infected
 p_r = 0.3 # recovery probability
 p_r_s = 0.05 # probability to become susceptible again after recovery
-p_s = 0.35 # self-isolation probability
+p_s = 0.05 # self-isolation probability
 i_t = 14  # isolation period for self-isolators
 
 # Set Watts-Strogatz network parameters
@@ -168,42 +175,47 @@ if __name__ == "__main__":
         update()
     print("--- results ---")
     print(results_df)
+    print("Self isolation probability: \t", str(p_s))
     print("Recovery rate: \t", sum([1 for n in G.nodes if G.nodes[n]['state'] == State.RECOVERED]) / NUM_NODES)    
     print("Death rate: \t", sum([1 for n in G.nodes if G.nodes[n]['state'] == State.DEAD]) / NUM_NODES)
     
     # plot susceptible
     results_df["num_susceptible"].plot(
-        figsize = (5,3),
-        marker='v'
+        figsize = (8,5),
+        linestyle="dashed"
     )
     
     # plot infected
     results_df["num_infected"].plot(
-        figsize = (5,3),
-        marker='o'
+        figsize = (8,5),
+        # marker='o',
+        linestyle="dotted"
     )
 
     # plot recovered
     results_df["num_recovered"].plot(
-        figsize = (5,3),
-        marker='o'
+        figsize = (8,5),
+        linestyle="dashdot"
     )
 
     # plot isolated
     results_df["num_isolated"].plot(
-        figsize = (5,3),
-        marker='o'
+        figsize = (8,5),
+        marker="o",
+        markersize=1,
+        linestyle="dashed"
     )
 
     # plot dead
     results_df["num_dead"].plot(
-        figsize = (5,3),
-        marker='o'
+        figsize = (8,5),
+        linestyle="solid"
     )
-
-    
-
-    
-
+    plt.legend(["Susceptible", "Infected", "Recovered", "Isolated", "Dead"])
+    plt.title("Epidemic trends using SIR model with self-isolation and death")
+    plt.xlabel("Iteration step")
+    plt.ylabel("Number of nodes")
     plt.show()
+    plt.savefig("../output/sir-modified-low-isolation.pgf")
+    # plt.savefig("../output/sir-modified-high-isolation.pgf")
     # pycx.GUI().start(func=[initialize, observe, update])
